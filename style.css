@@ -1,0 +1,21 @@
+:root{
+  --bg: #0f172a;
+  --panel: #0b1220;
+  --accent: #2563EB;
+  --muted: #94a3b8;
+}
+
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,Segoe UI,Roboto,Arial;background:var(--bg);color:#e6eef8}
+#app{display:grid;grid-template-columns:1fr 1fr;height:73vh;gap:12px;padding:14px}
+.panel{background:var(--panel);border-radius:8px;overflow:hidden;display:flex;flex-direction:column}
+.panel-header{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);font-weight:600;color:var(--muted)}
+.editor{flex:1;min-height:220px}
+#gridWrapper{flex:1;display:flex;align-items:center;justify-content:center;padding:18px}
+.grid-container{width:90%;height:90%;background:#fff;border-radius:8px;padding:12px;display:grid;align-content:start}
+.grid-item{background:var(--accent);color:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;padding:8px}
+.controls-row{display:flex;gap:8px;align-items:center;padding:10px;border-top:1px solid rgba(255,255,255,0.03)}
+.controls-row label{color:var(--muted);font-size:13px}
+.controls-row input, .controls-row select{padding:6px;border-radius:6px;border:1px solid rgba(255,255,255,0.04);background:#071025;color:#e6eef8}
+#bottomPanel{padding:12px}
+.css-output{background:#071025;padding:12px;border-radius:8px;color:#bbf7d0;max-height:22vh;overflow:auto}
