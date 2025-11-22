@@ -1,4 +1,170 @@
+window.onload = function () {
 
+  require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.41.0/min/vs' }});
+
+  require(['vs/editor/editor.main'], function() {
+
+    const initialCSS = `/* Edit only values or properties — preview updates live */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 10px;
+  grid-auto-flow: row;
+}
+
+.grid-item {
+  background: #2563EB;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 300ms ease;
+}
+`;
+
+    const cssOutput = document.getElementById("cssOutput");
+    const grid = document.getElementById("gridContainer");
+    const colsInput = document.getElementById('cols');
+    const rowsInput = document.getElementById('rows');
+    const gapInput = document.getElementById('gap');
+    const autoFlowInput = document.getElementById('autoFlow');
+    const syncBtn = document.getElementById('syncUI');
+    const copyBtn = document.getElementById('copyCSS');
+
+    // Create Monaco Editor
+    window.editor = monaco.editor.create(document.getElementById('editor'), {
+      value: initialCSS,
+      language: 'css',
+      theme: 'vs-dark',
+      automaticLayout: true,
+      minimap: { enabled: false },
+      fontSize: 14,
+    });
+
+    /* -------------------------------
+       AUTOCOMPLETE SUGGESTIONS
+    --------------------------------*/
+    monaco.languages.registerCompletionItemProvider('css', {
+      provideCompletionItems: function() {
+        return {
+          suggestions: [
+            { label: 'grid-template-columns', kind: monaco.languages.CompletionItemKind.Property, insertText: 'grid-template-columns: repeat(3, 1fr);' },
+            { label: 'grid-template-rows', kind: monaco.languages.CompletionItemKind.Property, insertText: 'grid-template-rows: repeat(3, 1fr);' },
+            { label: 'gap', kind: monaco.languages.CompletionItemKind.Property, insertText: 'gap: 10px;' },
+            { label: 'grid-auto-flow', kind: monaco.languages.CompletionItemKind.Property, insertText: 'grid-auto-flow: row;' },
+            { label: 'grid-template-areas', kind: monaco.languages.CompletionItemKind.Property, insertText: 'grid-template-areas:\\n  "header header"\\n  "sidebar main";' }
+          ]
+        };
+      }
+    });
+
+    /* -------------------------------
+       HOVER TOOLTIP HELP
+    --------------------------------*/
+    monaco.languages.registerHoverProvider('css', {
+      provideHover: function(model, pos) {
+        const word = model.getWordAtPosition(pos);
+        if (!word) return;
+
+        const w = word.word;
+
+        if (w.includes("minmax")) {
+          return {
+            contents: [
+              { value: "**minmax(min, max)** — Sets flexible track limits." }
+            ]
+          };
+        }
+
+        if (w.includes("auto-fit") || w.includes("auto-fill")) {
+          return {
+            contents: [
+              { value: "**auto-fit / auto-fill** — Used inside repeat() for responsive grids." }
+            ]
+          };
+        }
+      }
+    });
+
+    /* -------------------------------
+       UPDATE PREVIEW FROM CODE
+    --------------------------------*/
+    function updatePreviewFromCode() {
+      const cssText = editor.getValue();
+      cssOutput.textContent = cssText;
+
+      let styleEl = document.getElementById("dynamicGridStyle");
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "dynamicGridStyle";
+        document.head.appendChild(styleEl);
+      }
+
+      const containerMatch = cssText.match(/\.grid-container\s*\{[\s\S]*?\}/);
+      const itemMatch = cssText.match(/\.grid-item\s*\{[\s\S]*?\}/);
+
+      let finalCSS = "";
+      if (containerMatch) finalCSS += containerMatch[0];
+      if (itemMatch) finalCSS += itemMatch[0];
+      styleEl.textContent = finalCSS;
+
+      generateItems();
+    }
+
+    function generateItems() {
+      const cols = parseInt(colsInput.value) || 3;
+      const rows = parseInt(rowsInput.value) || 3;
+      const total = cols * rows;
+
+      grid.innerHTML = "";
+      for (let i = 1; i <= total; i++) {
+        const d = document.createElement("div");
+        d.className = "grid-item";
+        d.textContent = "Item " + i;
+        grid.appendChild(d);
+      }
+    }
+
+    /* -------------------------------
+       SYNC UI → CODE
+    --------------------------------*/
+    function syncUIToCode() {
+      let code = editor.getValue();
+
+      code = code.replace(/grid-template-columns:.*?;/, `grid-template-columns: repeat(${colsInput.value}, 1fr);`);
+      code = code.replace(/grid-template-rows:.*?;/, `grid-template-rows: repeat(${rowsInput.value}, 1fr);`);
+      code = code.replace(/gap:.*?;/, `gap: ${gapInput.value}px;`);
+      code = code.replace(/grid-auto-flow:.*?;/, `grid-auto-flow: ${autoFlowInput.value};`);
+
+      editor.setValue(code);
+      updatePreviewFromCode();
+    }
+
+    /* -------------------------------
+       EVENTS
+    --------------------------------*/
+    editor.onDidChangeModelContent(() => updatePreviewFromCode());
+    colsInput.oninput = syncUIToCode;
+    rowsInput.oninput = syncUIToCode;
+    gapInput.oninput = syncUIToCode;
+    autoFlowInput.onchange = syncUIToCode;
+    syncBtn.onclick = syncUIToCode;
+
+    copyBtn.onclick = function () {
+      navigator.clipboard.writeText(cssOutput.textContent);
+      alert("CSS copied!");
+    };
+
+    /* -------------------------------
+       INITIAL RENDER
+    --------------------------------*/
+    updatePreviewFromCode();
+
+  }); // end require
+}; // end window.onload
 
 // Extra helper functions (kept minimal since Monaco loads in index)
 console.log('Grid Visualizer Pro (Monaco) loaded');
